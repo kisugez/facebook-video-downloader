@@ -55,5 +55,30 @@
   }
   body {
     @apply bg-background text-foreground bg-gray-50 font-sans;
+    font-weight: 500; /* Medium weight as default */
+  }
+
+  /* Set default font weights for different elements */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600; /* SemiBold for headings */
+  }
+
+  /* Special style for main title only - uses Clarika Pro */
+  .title-clarika {
+    font-family: var(--font-clarika), sans-serif !important;
+    font-weight: 700;
+  }
+
+  button {
+    font-weight: 600; /* SemiBold for buttons */
+  }
+
+  label {
+    font-weight: 600; /* SemiBold for labels */
+  }
+
+  /* Regular weight for body text */
+  p, span, div {
+    font-weight: 500; /* Medium for all text */
   }
 }
