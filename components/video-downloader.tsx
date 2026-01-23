@@ -24,6 +24,8 @@ export default function VideoDownloader() {
   const [videoTitle, setVideoTitle] = useState("")
   const [formats, setFormats] = useState<VideoFormat[]>([])
   const [selectedFormat, setSelectedFormat] = useState("")
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,6 +72,61 @@ export default function VideoDownloader() {
     } catch (error) {
       setStatus("error")
       setMessage("An unexpected error occurred. Please try again.")
+    }
+  }
+
+  const handleDownload = async () => {
+    setIsDownloading(true)
+    setDownloadProgress(0)
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    const formatParam = selectedFormat ? `&format_id=${selectedFormat}` : ""
+    const downloadUrl = `${apiUrl}/api/download/${downloadId}?url=${encodeURIComponent(url)}${formatParam}`
+
+    try {
+      // Create a simulated progress that increases gradually
+      const progressInterval = setInterval(() => {
+        setDownloadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 90
+          }
+          return prev + 10
+        })
+      }, 300)
+
+      const response = await fetch(downloadUrl)
+      
+      if (!response.ok) {
+        clearInterval(progressInterval)
+        throw new Error('Download failed')
+      }
+
+      const blob = await response.blob()
+      clearInterval(progressInterval)
+      setDownloadProgress(100)
+
+      // Create download link
+      const blobUrl = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = `${videoTitle}.mp4`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(blobUrl)
+      document.body.removeChild(a)
+
+      // Reset progress after a delay
+      setTimeout(() => {
+        setIsDownloading(false)
+        setDownloadProgress(0)
+      }, 2000)
+    } catch (error) {
+      console.error('Download error:', error)
+      setIsDownloading(false)
+      setDownloadProgress(0)
+      setStatus("error")
+      setMessage("Download failed. Please try again.")
     }
   }
 
@@ -174,6 +231,38 @@ export default function VideoDownloader() {
             </div>
           </div>
 
+          {/* Download Progress Indicator - Only shows when downloading */}
+          {isDownloading && (
+            <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="h-6 w-6 text-[#1877F2] animate-spin" />
+                  <div className="flex flex-col">
+                    <p className="text-sm font-semibold text-[#1877F2]">Downloading video...</p>
+                    <p className="text-xs text-gray-600">Please wait while your video is being downloaded</p>
+                  </div>
+                </div>
+                <span className="text-lg font-bold text-[#1877F2]">{downloadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
+                <div
+                  className="h-full bg-gradient-to-r from-[#1877F2] to-[#42b72a] transition-all duration-300 ease-out flex items-center justify-end pr-1"
+                  style={{ width: `${downloadProgress}%` }}
+                >
+                  {downloadProgress > 5 && (
+                    <div className="h-2 w-2 bg-white rounded-full animate-pulse"></div>
+                  )}
+                </div>
+              </div>
+              {downloadProgress === 100 && (
+                <div className="mt-3 flex items-center justify-center gap-2 text-green-600">
+                  <Check className="h-5 w-5" />
+                  <p className="text-sm font-semibold">Download complete!</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {formats.length > 0 && (
             <div className="mt-4">
               <h4 className="text-sm font-medium text-gray-700 mb-2">Select Quality:</h4>
@@ -217,14 +306,23 @@ export default function VideoDownloader() {
           )}
 
           <div className="mt-4">
-            <a
-              href={getDownloadUrl()}
-              download={`${videoTitle}.mp4`}
-              className="bg-[#1877F2] hover:bg-[#166FE5] text-white font-medium py-2 px-4 rounded-md transition-colors w-full flex items-center justify-center"
+            <button
+              onClick={handleDownload}
+              disabled={isDownloading}
+              className="bg-[#1877F2] hover:bg-[#166FE5] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-md transition-colors w-full flex items-center justify-center"
             >
-              <Download className="mr-2 h-5 w-5" />
-              Download Now
-            </a>
+              {isDownloading ? (
+                <>
+                  <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                  Downloading...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-5 w-5" />
+                  Download Now
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}
