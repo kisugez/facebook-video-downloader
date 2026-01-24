@@ -2,6 +2,11 @@
 
 A modern web application that allows users to download videos from Facebook by providing the video URL. Built with FastAPI backend and Next.js frontend.
 
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript)
+![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=nextdotjs)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
+
 ## ✨ Features
 
 - 📥 Download videos from Facebook with a simple URL
